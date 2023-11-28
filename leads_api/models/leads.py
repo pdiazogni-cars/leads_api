@@ -1,7 +1,7 @@
 """
 Core models which are shared with Obelisk, and populated via fixture data.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Text
 from sqlalchemy import (
     ForeignKey,
@@ -66,8 +66,8 @@ make = Table(
 class Make:
     slug: Text
     name: Text
-    years: List['Year']
-    models: List['MakeModel']
+    years: List['Year'] = field(default_factory=list)
+    models: List['MakeModel'] = field(default_factory=list)
 
 
 make_model = Table(
@@ -119,8 +119,8 @@ class Buyer(JSONEncoder):
     slug: Text
     name: Text
     #makes: List['Make']
-    tiers: List['BuyerTier']
-    dealers: List['BuyerDealer']
+    tiers: List['BuyerTier'] = field(default_factory=list)
+    dealers: List['BuyerDealer'] = field(default_factory=list)
 
 
 buyer_tier = Table(
@@ -211,6 +211,8 @@ buyer_dealer_coverage = Table(
 
 @dataclass
 class BuyerDealerCoverage:
+    buyer_slug: Text
+    buyer_dealer_code: Text
     zipcode: Text
     distance: int
 

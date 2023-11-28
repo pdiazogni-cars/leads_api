@@ -33,7 +33,7 @@ coverage_service = Service(
     schema=GetQuerystringSchema,
     validators=(marshmallow_querystring_validator),
 )
-def coverage(request: Request):
+def coverage_get(request: Request):
     # Get requests params
     limit = request.validated.get('limit', 3)
     buyer_tier = request.validated['buyer_tier']
@@ -54,8 +54,8 @@ def coverage(request: Request):
             BuyerDealer.state.label('dealer_state'),
             BuyerDealer.zipcode.label('dealer_zipcode'),
             BuyerDealer.phone.label('dealer_phone'),
-            BuyerDealerCoverage.distance.label('coverage_distance'),
-            BuyerDealerCoverage.zipcode.label('coverage_zipcode'),
+            BuyerDealerCoverage.distance.label('distance'),
+            BuyerDealerCoverage.zipcode.label('zipcode'),
         )
         .filter(
             # Joins
@@ -99,8 +99,8 @@ def coverage(request: Request):
                 'dealer_state': row['dealer_state'],
                 'dealer_zipcode': row['dealer_zipcode'],
                 'dealer_phone': row['dealer_phone'],
-                'distance': row['coverage_distance'],
-                'zipcode': row['coverage_zipcode'],
+                'distance': row['distance'],
+                'zipcode': row['zipcode'],
                 'make': row['make'],
                 #'year': row['year'],
             }
@@ -110,7 +110,7 @@ def coverage(request: Request):
 
     result = {
         'status': 'ok',
-        'response': data,
+        'data': data,
         'metadata': {
             'params': dict(request.params),
         },
