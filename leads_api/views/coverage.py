@@ -16,12 +16,18 @@ from leads_api.models.leads import (
 
 
 class GetQuerystringSchema(Schema):
+    """This schema is used to validate Coverage GET requests
+    querystring parameters, using Marshmallow Schema + cornice
+    service integration with marshmallow
+    """
     buyer_tier = fields.String(required=True)
     zipcode = fields.String(required=True)
     make = fields.String(required=True)
     limit = fields.Integer(default=3)
 
 
+# Define a cornice service to integrate the marshmallow schema validation
+# mapped to pyramid route
 coverage_service = Service(
     name='coverage',
     description="Returns the buyer's coverage of a make in a zipcode",
@@ -34,6 +40,7 @@ coverage_service = Service(
     validators=(marshmallow_querystring_validator),
 )
 def coverage_get(request: Request):
+    """Gets the dealers coverage for a specific buyer, make within a zipcode"""
     # Get requests params
     limit = request.validated.get('limit', 3)
     buyer_tier = request.validated['buyer_tier']
@@ -82,6 +89,20 @@ def coverage_get(request: Request):
     # Fetch all rows
     rows = query.all()
 
+    # Parse results into the expected dict format:
+    # {
+    #   'status': status,
+    #   'data': [
+    #     'has_coverage': True/False,
+    #     'buyer': buyer,
+    #     'buyer_tier': buyer_tier,
+    #     'coverage': [
+    #        { dealer 1 info + coverage },
+    #        { dealer 2 info + coverage },
+    #     ]
+    #   ],
+    #   'metadata': request metadata,
+    # }
     data = {}
     if len(rows) > 0:
         data['has_coverage'] = True

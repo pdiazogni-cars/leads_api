@@ -9,12 +9,12 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 requires = [
+    'cornice',
     'marshmallow',
     'plaster_pastedeploy',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
-    'pyramid-marshmallow',
     'waitress',
     'pyramid_retry',
     'pyramid_tm',
@@ -28,6 +28,8 @@ tests_require = [
     'WebTest',
     'pytest',
     'pytest-cov',
+    'faker_boy',
+    'parameterized',
 ]
 
 setup(
