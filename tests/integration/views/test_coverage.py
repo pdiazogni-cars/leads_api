@@ -1,3 +1,5 @@
+from parameterized import parameterized
+
 from tests.integration import BaseIntegrationTest
 
 
@@ -89,3 +91,35 @@ class CoverageGetTests(BaseIntegrationTest):
         self.assertEqual(row.get('dealer_phone'), self.buyer_dealer.phone)
         self.assertEqual(row.get('distance'), self.dealer_coverage.distance)
         self.assertEqual(row.get('zipcode'), self.dealer_coverage.zipcode)
+
+    @parameterized.expand(['buyer_tier', 'make', 'zipcode'])
+    def test_missing_params(self, remove_key):
+        # Creates dummy data
+        self.make_one()
+
+        # Sets requested params
+        params = {
+            'buyer_tier': self.buyer_tier.slug,
+            'make': self.make.slug,
+            'zipcode': self.dealer_coverage.zipcode,
+        }
+        params.pop(remove_key)
+
+        # Performs the request for coverage
+        response = self.testapp.get(
+            '/v1/coverage',
+            params=params,
+            expect_errors=True,
+        )
+
+        # Should return 400 status
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get('status'), 'error')
+        # Should have a list of errors with a single error
+        errors = response.json.get('errors')
+        self.assertIsInstance(errors, list)
+        self.assertEqual(len(errors), 1)
+        error = errors[0]
+        # The error should point to querystring and have the name of the missing param
+        self.assertEqual(error.get('location'), 'querystring')
+        self.assertEqual(error.get('name'), remove_key)

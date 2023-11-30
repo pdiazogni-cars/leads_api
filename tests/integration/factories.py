@@ -1,3 +1,10 @@
+"""
+We use FactoryBoy module to map our current ORM models with
+factory classes. Here we define the models and factories for each
+column.
+Note that each factory needs to be associated with the SQLAlchemy
+session object.
+"""
 import factory
 
 from leads_api.models.leads import (
@@ -93,6 +100,9 @@ class BuyerTierMakeFactory(factory.alchemy.SQLAlchemyModelFactory):
 
 
 def set_session(dbsession):
+    """Associates all the factories models to the current testing db session.
+    This way the factories can generate dummy data for testing in the same
+    transaction and will be cleared later."""
     for cls in [
         BuyerFactory,
         BuyerTierFactory,
