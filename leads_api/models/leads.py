@@ -156,6 +156,20 @@ class BuyerTierMakeYear:
     make_slug: Text
     year_slug: Text
 
+buyer_dealer = Table(
+    'buyer_dealer',
+    metadata,
+    Column(
+        'buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True
+    ),
+    Column('code', String(15), primary_key=True),
+    Column('name', String(255)),
+    Column('address', String(255)),
+    Column('city', String(255)),
+    Column('state', String(255)),
+    Column('zipcode', String(255)),
+    Column('phone', String(255)),
+)
 
 # ========= Mappings ============
 # Mappings should be done after declaring the Tables so
