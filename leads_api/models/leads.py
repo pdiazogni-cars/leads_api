@@ -53,13 +53,10 @@ class JSONEncoder:
         }
 
 
-make = Table(
-    "make",
-    metadata,
-    Column("slug", String(50), primary_key=True),
-    Column("name", String(50), nullable=False),
-    UniqueConstraint('name'),
-)
+@dataclass
+class Year:
+    slug: Text
+    name: Text
 
 
 @dataclass
@@ -70,77 +67,210 @@ class Make:
     models: List['MakeModel'] = field(default_factory=list)
 
 
-make_model = Table(
-    "make_model",
-    metadata,
-    Column("make_slug", String(50), ForeignKey("make.slug"), primary_key=True),
-    Column("slug", String(50), primary_key=True),
-    Column("name", String(50), nullable=False),
-    UniqueConstraint('make_slug', 'name'),
-)
-
-
 @dataclass
 class MakeModel:
     make_slug: Text
     slug: Text
     name: Text
-    years: List['Year']
-
-
-year = Table(
-    "year",
-    metadata,
-    Column("slug", String(50), primary_key=True),
-    Column("name", String(50), nullable=False),
-    UniqueConstraint('name'),
-    UniqueConstraint('slug'),
-)
+    years: List['Year'] = field(default_factory=list)
 
 
 @dataclass
-class Year:
+class Buyer:
     slug: Text
     name: Text
-
-
-buyer = Table(
-    "buyer",
-    metadata,
-    Column("slug", String(50), primary_key=True),
-    Column("name", String(50), nullable=False),
-    UniqueConstraint('name'),
-    UniqueConstraint('slug'),
-)
-
-
-@dataclass
-class Buyer(JSONEncoder):
-    slug: Text
-    name: Text
-    #makes: List['Make']
+    makes: List['Make'] = field(default_factory=list)
     tiers: List['BuyerTier'] = field(default_factory=list)
     dealers: List['BuyerDealer'] = field(default_factory=list)
 
 
-buyer_tier = Table(
-    "buyer_tier",
-    metadata,
-    Column(
-        "buyer_slug", String(50), ForeignKey("buyer.slug"), primary_key=True
-    ),
-    Column("slug", String(50), primary_key=True),
-    Column("name", String(50), nullable=False),
-    UniqueConstraint('buyer_slug', 'name'),
-)
-
-
 @dataclass
-class BuyerTier(JSONEncoder):
+class BuyerTier:
     buyer_slug: Text
     slug: Text
     name: Text
-    #makes: List[Make]
+    makes: List[Make] = field(default_factory=list)
+
+
+@dataclass
+class LegacyBuyerTier:
+    buyer_slug: Text
+    buyer_tier_slug: Text
+    legacy_id: Integer
+    legacy_name: Text
+
+
+@dataclass
+class BuyerDealer:
+    buyer_slug: Text
+    code: Text
+    name: Text
+    address: Text
+    city: Text
+    state: Text
+    zipcode: Text
+    phone: Text
+    makes: List['Make'] = field(default_factory=list)
+    coverage: List['BuyerDealerCoverage'] = field(default_factory=list)
+
+
+@dataclass
+class BuyerDealerCoverage:
+    buyer_slug: Text
+    buyer_dealer_code: Text
+    zipcode: Text
+    distance: int
+
+
+@dataclass
+class BuyerMake:
+    buyer_slug: Text
+    make_slug: Text
+
+
+@dataclass
+class BuyerTierMake:
+    buyer_slug: Text
+    tier_slug: Text
+    make_slug: Text
+
+
+@dataclass
+class BuyerTierMakeYear:
+    buyer_slug: Text
+    tier_slug: Text
+    make_slug: Text
+    year_slug: Text
+
+
+# ==== Tables ====
+
+year = Table(
+    'year',
+    metadata,
+    Column('slug', String(50), primary_key=True),
+    Column('name', String(50), nullable=False),
+    UniqueConstraint('name'),
+)
+
+make = Table(
+    "make",
+    metadata,
+    Column("slug", String(50), primary_key=True),
+    Column("name", String(50), nullable=False),
+    UniqueConstraint('name'),
+)
+
+make_year = Table(
+    'make_year',
+    metadata,
+    Column('make_slug', String(50), ForeignKey('make.slug'), primary_key=True),
+    Column('year_slug', String(50), ForeignKey('year.slug'), primary_key=True),
+)
+
+make_model = Table(
+    'make_model',
+    metadata,
+    Column('make_slug', String(50), ForeignKey('make.slug'), primary_key=True),
+    Column('slug', String(50), primary_key=True),
+    Column('name', String(50), nullable=False),
+    UniqueConstraint('make_slug', 'name'),
+)
+
+make_model_year = Table(
+    'make_model_year',
+    metadata,
+    Column('make_slug', String(50), primary_key=True),
+    Column('model_slug', String(50), primary_key=True),
+    Column('year_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['make_slug', 'model_slug'], ['make_model.make_slug', 'make_model.slug']
+    ),
+    ForeignKeyConstraint(
+        ['make_slug', 'year_slug'], ['make_year.make_slug', 'make_year.year_slug']
+    ),
+)
+
+buyer = Table(
+    'buyer',
+    metadata,
+    Column('slug', String(50), primary_key=True),
+    Column('name', String(50), nullable=False),
+    UniqueConstraint('name'),
+)
+
+buyer_year = Table(
+    'buyer_year',
+    metadata,
+    Column('buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True),
+    Column('year_slug', String(50), ForeignKey('year.slug'), primary_key=True),
+)
+
+buyer_make = Table(
+    'buyer_make',
+    metadata,
+    Column('buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True),
+    Column('make_slug', String(50), ForeignKey('make.slug'), primary_key=True),
+)
+
+buyer_make_year = Table(
+    'buyer_make_year',
+    metadata,
+    Column('buyer_slug', String(50), primary_key=True),
+    Column('make_slug', String(50), primary_key=True),
+    Column('year_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'make_slug'],
+        ['buyer_make.buyer_slug', 'buyer_make.make_slug'],
+    ),
+    ForeignKeyConstraint(
+        ['make_slug', 'year_slug'],
+        ['make_year.make_slug', 'make_year.year_slug'],
+    ),
+)
+
+buyer_make_model = Table(
+    'buyer_make_model',
+    metadata,
+    Column('buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True),
+    Column('make_slug', String(50), primary_key=True),
+    Column('model_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'make_slug'], ['buyer_make.buyer_slug', 'buyer_make.make_slug']
+    ),
+    ForeignKeyConstraint(
+        ['make_slug', 'model_slug'], ['make_model.make_slug', 'make_model.slug']
+    ),
+)
+
+buyer_make_model_year = Table(
+    'buyer_make_model_year',
+    metadata,
+    Column('buyer_slug', String(50), primary_key=True),
+    Column('make_slug', String(50), primary_key=True),
+    Column('model_slug', String(50), primary_key=True),
+    Column('year_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'make_slug', 'model_slug'],
+        ['buyer_make_model.buyer_slug', 'buyer_make_model.make_slug', 'buyer_make_model.model_slug'],
+    ),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'make_slug', 'year_slug'],
+        ['buyer_make_year.buyer_slug', 'buyer_make_year.make_slug', 'buyer_make_year.year_slug'],
+    ),
+)
+
+buyer_tier = Table(
+    'buyer_tier',
+    metadata,
+    Column(
+        'buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True
+    ),
+    Column('slug', String(50), primary_key=True),
+    Column('name', String(50), nullable=False),
+    UniqueConstraint('buyer_slug', 'name'),
+)
+
 
 
 legacy_buyer_tier = Table(
@@ -157,126 +287,19 @@ legacy_buyer_tier = Table(
     ),
 )
 
-
-@dataclass
-class LegacyBuyerTier:
-    buyer_slug: Text
-    buyer_tier_slug: Text
-    legacy_id: Integer
-    legacy_name: Text
-
-
-buyer_dealer = Table(
-    'buyer_dealer',
-    metadata,
-    Column(
-        "buyer_slug", String(50), ForeignKey("buyer.slug"), primary_key=True
-    ),
-    Column('code', String(15), primary_key=True),
-    Column('name', String(255)),
-    Column('address', String(255)),
-    Column('city', String(255)),
-    Column('state', String(255)),
-    Column('zipcode', String(255)),
-    Column('phone', String(255)),
-)
-
-
-@dataclass
-class BuyerDealer:
-    buyer_slug: Text
-    code: Text
-    name: Text
-    address: Text
-    city: Text
-    state: Text
-    zipcode: Text
-    phone: Text
-    #makes: List['Make']
-    #coverage: List['BuyerDealerCoverage']
-
-
-buyer_dealer_coverage = Table(
-    'buyer_dealer_coverage',
+buyer_tier_year = Table(
+    'buyer_tier_year',
     metadata,
     Column('buyer_slug', String(50), primary_key=True),
-    Column('buyer_dealer_code', String(50), primary_key=True),
-    Column('zipcode', String(255), primary_key=True),
-    Column('distance', Integer),
-    ForeignKeyConstraint(
-        ["buyer_slug", "buyer_dealer_code"], ["buyer_dealer.buyer_slug", "buyer_dealer.code"]
-    ),
-)
-
-
-@dataclass
-class BuyerDealerCoverage:
-    buyer_slug: Text
-    buyer_dealer_code: Text
-    zipcode: Text
-    distance: int
-
-
-# The tables defined below are association tables, and as such do not
-# correspond to dataclass models.  Instead they will be mapped to
-# attributes of the dataclasses as appropriate.
-
-
-make_year = Table(
-    'make_year',
-    metadata,
-    Column('make_slug', String(50), ForeignKey('make.slug'), primary_key=True),
-    Column('year_slug', String(50), ForeignKey('year.slug'), primary_key=True),
-)
-
-
-make_model_year = Table(
-    'make_model_year',
-    metadata,
-    Column('make_slug', String(50), primary_key=True),
-    Column('model_slug', String(50), primary_key=True),
+    Column('tier_slug', String(50), primary_key=True),
     Column('year_slug', String(50), primary_key=True),
     ForeignKeyConstraint(
-        ["make_slug", "model_slug"], ["make_model.make_slug", "make_model.slug"]
+        ['buyer_slug', 'tier_slug'], ['buyer_tier.buyer_slug', 'buyer_tier.slug'],
     ),
     ForeignKeyConstraint(
-        ["make_slug", "year_slug"], ["make_year.make_slug", "make_year.year_slug"]
+        ['buyer_slug', 'year_slug'], ['buyer_year.buyer_slug', 'buyer_year.year_slug'],
     ),
 )
-
-
-buyer_make = Table(
-    'buyer_make',
-    metadata,
-    Column(
-        'buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True
-    ),
-    Column('make_slug', String(50), ForeignKey('make.slug'), primary_key=True),
-)
-
-
-@dataclass
-class BuyerMake(JSONEncoder):
-    buyer_slug: Text
-    make_slug: Text
-
-
-buyer_make_year = Table(
-    "buyer_make_year",
-    metadata,
-    Column('buyer_slug', String(50), primary_key=True),
-    Column('make_slug', String(50), primary_key=True),
-    Column('year_slug', String(50), primary_key=True),
-    ForeignKeyConstraint(
-        ["buyer_slug", "make_slug"],
-        ["buyer_make.buyer_slug", "buyer_make.make_slug"],
-    ),
-    ForeignKeyConstraint(
-        ["make_slug", "year_slug"],
-        ["make_year.make_slug", "make_year.year_slug"],
-    ),
-)
-
 
 buyer_tier_make = Table(
     'buyer_tier_make',
@@ -285,20 +308,13 @@ buyer_tier_make = Table(
     Column('tier_slug', String(50), primary_key=True),
     Column('make_slug', String(50), primary_key=True),
     ForeignKeyConstraint(
-        ["buyer_slug", "tier_slug"], ["buyer_tier.buyer_slug", "buyer_tier.slug"]
+        ['buyer_slug', 'tier_slug'], ['buyer_tier.buyer_slug', 'buyer_tier.slug']
     ),
     ForeignKeyConstraint(
-        ["buyer_slug", "make_slug"],
-        ["buyer_make.buyer_slug", "buyer_make.make_slug"],
+        ['buyer_slug', 'make_slug'],
+        ['buyer_make.buyer_slug', 'buyer_make.make_slug'],
     ),
 )
-
-
-@dataclass
-class BuyerTierMake(JSONEncoder):
-    buyer_slug: Text
-    tier_slug: Text
-    make_slug: Text
 
 
 buyer_tier_make_year = Table(
@@ -309,48 +325,118 @@ buyer_tier_make_year = Table(
     Column('make_slug', String(50), primary_key=True),
     Column('year_slug', String(50), primary_key=True),
     ForeignKeyConstraint(
-        ["buyer_slug", "tier_slug", "make_slug"],
+        ['buyer_slug', 'tier_slug', 'make_slug'],
         [
-            "buyer_tier_make.buyer_slug",
-            "buyer_tier_make.tier_slug",
-            "buyer_tier_make.make_slug",
+            'buyer_tier_make.buyer_slug',
+            'buyer_tier_make.tier_slug',
+            'buyer_tier_make.make_slug',
         ],
     ),
     ForeignKeyConstraint(
-        ["buyer_slug", "make_slug", "year_slug"],
+        ['buyer_slug', 'tier_slug', 'year_slug'],
         [
-            "buyer_make_year.buyer_slug",
-            "buyer_make_year.make_slug",
-            "buyer_make_year.year_slug",
+            'buyer_tier_year.buyer_slug',
+            'buyer_tier_year.tier_slug',
+            'buyer_tier_year.year_slug',
         ],
     ),
 )
 
+buyer_tier_make_model = Table(
+    'buyer_tier_make_model',
+    metadata,
+    Column('buyer_slug', String(50), primary_key=True),
+    Column('tier_slug', String(50), primary_key=True),
+    Column('make_slug', String(50), primary_key=True),
+    Column('model_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'tier_slug', 'make_slug'],
+        [
+            'buyer_tier_make.buyer_slug',
+            'buyer_tier_make.tier_slug',
+            'buyer_tier_make.make_slug',
+        ],
+    ),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'make_slug', 'model_slug'],
+        [
+            'buyer_make_model.buyer_slug',
+            'buyer_make_model.make_slug',
+            'buyer_make_model.model_slug',
+        ],
+    ),
+)
 
-@dataclass
-class BuyerTierMakeYear(JSONEncoder):
-    buyer_slug: Text
-    tier_slug: Text
-    make_slug: Text
-    year_slug: Text
+buyer_tier_make_model_year = Table(
+    'buyer_tier_make_model_year',
+    metadata,
+    Column('buyer_slug', String(50), primary_key=True),
+    Column('tier_slug', String(50), primary_key=True),
+    Column('make_slug', String(50), primary_key=True),
+    Column('model_slug', String(50), primary_key=True),
+    Column('year_slug', String(50), primary_key=True),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'tier_slug', 'make_slug', 'model_slug'],
+        [
+            'buyer_tier_make_model.buyer_slug',
+            'buyer_tier_make_model.tier_slug',
+            'buyer_tier_make_model.make_slug',
+            'buyer_tier_make_model.model_slug',
+        ],
+    ),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'tier_slug', 'make_slug', 'year_slug'],
+        [
+            'buyer_tier_make_year.buyer_slug',
+            'buyer_tier_make_year.tier_slug',
+            'buyer_tier_make_year.make_slug',
+            'buyer_tier_make_year.year_slug',
+        ],
+    ),
+)
 
+buyer_dealer = Table(
+    'buyer_dealer',
+    metadata,
+    Column(
+        'buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True
+    ),
+    Column('code', String(15), primary_key=True),
+    Column('name', String(255)),
+    Column('address', String(255)),
+    Column('city', String(255)),
+    Column('state', String(255)),
+    Column('zipcode', String(255)),
+    Column('phone', String(255)),
+)
 
 buyer_dealer_make = Table(
     'buyer_dealer_make',
     metadata,
-    Column("buyer_slug", String(50), primary_key=True),
+    Column('buyer_slug', String(50), primary_key=True),
     Column('buyer_dealer_code', String(15), primary_key=True),
     Column('make_slug', String(50), primary_key=True),
     ForeignKeyConstraint(
-        ["buyer_slug", "buyer_dealer_code"],
-        ["buyer_dealer.buyer_slug", "buyer_dealer.code"],
+        ['buyer_slug', 'buyer_dealer_code'],
+        ['buyer_dealer.buyer_slug', 'buyer_dealer.code'],
     ),
     ForeignKeyConstraint(
-        ["buyer_slug", "make_slug"],
-        ["buyer_make.buyer_slug", "buyer_make.make_slug"],
+        ['buyer_slug', 'make_slug'],
+        ['buyer_make.buyer_slug', 'buyer_make.make_slug'],
     ),
 )
 
+buyer_dealer_coverage = Table(
+    'buyer_dealer_coverage',
+    metadata,
+    Column('buyer_slug', String(50), primary_key=True),
+    Column('buyer_dealer_code', String(50), primary_key=True),
+    Column('zipcode', String(255), primary_key=True),
+    Column('distance', Integer),
+    ForeignKeyConstraint(
+        ['buyer_slug', 'buyer_dealer_code'], ['buyer_dealer.buyer_slug', 'buyer_dealer.code']
+    ),
+)
 
 # ========= Mappings ============
 # Mappings should be done after declaring the Tables so
@@ -375,7 +461,7 @@ mapper_registry.map_imperatively(
     Buyer,
     buyer,
     properties={
-        #'makes': relationship(Make, secondary=buyer_make),
+        'makes': relationship(Make, secondary=buyer_make),
         'tiers': relationship(BuyerTier),
     }
 )
@@ -385,7 +471,11 @@ mapper_registry.map_imperatively(
     buyer_tier,
     properties={
         #'makes': relationship(Make, secondary=buyer_tier_make),
-        'legacy_buyer_tier': relationship(LegacyBuyerTier, back_populates='buyer_tier', uselist=False),
+        'legacy_buyer_tier': relationship(
+            LegacyBuyerTier,
+            back_populates='buyer_tier',
+            uselist=False,
+        ),
     }
 )
 
@@ -393,7 +483,11 @@ mapper_registry.map_imperatively(
     LegacyBuyerTier,
     legacy_buyer_tier,
     properties={
-        'buyer_tier': relationship(BuyerTier, back_populates='legacy_buyer_tier', uselist=False),
+        'buyer_tier': relationship(
+            BuyerTier,
+            back_populates='legacy_buyer_tier',
+            uselist=False,
+        ),
     }
 )
 
@@ -426,7 +520,6 @@ mapper_registry.map_imperatively(
     #}
 )
 
-# TODO: Can we unify this with the above table?
 mapper_registry.map_imperatively(
     BuyerTierMakeYear,
     buyer_tier_make_year,
