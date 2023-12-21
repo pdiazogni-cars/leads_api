@@ -52,17 +52,17 @@ class CoverageGetTests(BaseIntegrationTest):
 
         # Sets requested params
         params = {
-            'buyer_tier': self.buyer_tier.slug,
-            'make': self.make.slug,
             'zipcode': self.dealer_coverage.zipcode,
         }
 
         # Performs the request for coverage
-        response = self.testapp.get('/v1/coverage', params=params)
+        response = self.testapp.get(
+            f'/v1/buyers_tiers/{self.buyer_tier.slug}/makes/{self.make.slug}/coverage',
+            params=params
+        )
 
         # Should return OK status
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json.get('status'), 'ok')
 
         # Should include metadata with params
         metadata = response.json.get('metadata')
@@ -92,34 +92,31 @@ class CoverageGetTests(BaseIntegrationTest):
         self.assertEqual(row.get('distance'), self.dealer_coverage.distance)
         self.assertEqual(row.get('zipcode'), self.dealer_coverage.zipcode)
 
-    @parameterized.expand(['buyer_tier', 'make', 'zipcode'])
+    @parameterized.expand(['zipcode'])
     def test_missing_params(self, remove_key):
         # Creates dummy data
         self.make_one()
 
         # Sets requested params
         params = {
-            'buyer_tier': self.buyer_tier.slug,
-            'make': self.make.slug,
             'zipcode': self.dealer_coverage.zipcode,
         }
         params.pop(remove_key)
 
         # Performs the request for coverage
         response = self.testapp.get(
-            '/v1/coverage',
+            f'/v1/buyers_tiers/{self.buyer_tier.slug}/makes/{self.make.slug}/coverage',
             params=params,
             expect_errors=True,
         )
 
         # Should return 400 status
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json.get('status'), 'error')
         # Should have a list of errors with a single error
         errors = response.json.get('errors')
         self.assertIsInstance(errors, list)
         self.assertEqual(len(errors), 1)
         error = errors[0]
-        # The error should point to querystring and have the name of the missing param
-        self.assertEqual(error.get('location'), 'querystring')
-        self.assertEqual(error.get('name'), remove_key)
+        # The error should be a MissingRequiredParameter and field should be the one we removed
+        self.assertEqual(error.get('exception'), 'MissingRequiredParameter')
+        self.assertEqual(error.get('field'), remove_key)

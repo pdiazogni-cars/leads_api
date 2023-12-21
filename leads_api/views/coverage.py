@@ -1,7 +1,5 @@
 from pyramid.request import Request
-from marshmallow import Schema, fields
-from cornice import Service
-from cornice.validators import marshmallow_querystring_validator
+from pyramid.view import view_config
 
 from leads_api.models.leads import (
     Buyer,
@@ -15,37 +13,19 @@ from leads_api.models.leads import (
 )
 
 
-class GetQuerystringSchema(Schema):
-    """This schema is used to validate Coverage GET requests
-    querystring parameters, using Marshmallow Schema + cornice
-    service integration with marshmallow
-    """
-    buyer_tier = fields.String(required=True)
-    zipcode = fields.String(required=True)
-    make = fields.String(required=True)
-    limit = fields.Integer(default=3)
-
-
-# Define a cornice service to integrate the marshmallow schema validation
-# mapped to pyramid route
-coverage_service = Service(
-    name='coverage',
-    description="Returns the buyer's coverage of a make in a zipcode",
-    pyramid_route='v1_coverage',
-)
-
-
-@coverage_service.get(
-    schema=GetQuerystringSchema,
-    validators=(marshmallow_querystring_validator),
+@view_config(
+    route_name='v1_buyers_tiers_makes_coverage',
+    openapi=True,
+    renderer='json',
 )
 def coverage_get(request: Request):
     """Gets the dealers coverage for a specific buyer, make within a zipcode"""
     # Get requests params
-    limit = request.validated.get('limit', 3)
-    buyer_tier = request.validated['buyer_tier']
-    make = request.validated['make']
-    zipcode = request.validated['zipcode']
+    params = request.openapi_validated.parameters
+    limit = params.query.get('limit', 3)
+    buyer_tier = params.path['buyer_tier_slug']
+    make = params.path['make_slug']
+    zipcode = params.query['zipcode']
 
     # Prepare the query
     query = (
@@ -129,11 +109,4 @@ def coverage_get(request: Request):
     else:
         data['has_coverage'] = False
 
-    result = {
-        'status': 'ok',
-        'data': data,
-        'metadata': {
-            'params': dict(request.params),
-        },
-    }
-    return result
+    return data

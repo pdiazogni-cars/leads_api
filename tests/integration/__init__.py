@@ -66,7 +66,7 @@ class BaseIntegrationTest(unittest.TestCase):
         self.testapp = TestApp(
             app,
             extra_environ={
-                'HTTP_HOST': 'leads_api.com',
+                'HTTP_HOST': 'localhost:6543',
                 'tm.active': True,
                 'tm.manager': self.tm,
                 'app.dbsession': self.dbsession,

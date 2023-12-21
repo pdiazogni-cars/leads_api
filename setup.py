@@ -9,18 +9,18 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 requires = [
-    'cornice',
-    'marshmallow',
+    'openapi-core<0.17',
     'plaster_pastedeploy',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
-    'waitress',
+    'pyramid_openapi3',
     'pyramid_retry',
     'pyramid_tm',
     'psycopg2',
     'SQLAlchemy',
     'transaction',
+    'waitress',
     'zope.sqlalchemy',
 ]
 
@@ -28,14 +28,14 @@ tests_require = [
     'WebTest',
     'pytest',
     'pytest-cov',
-    'faker_boy',
+    'factory_boy',
     'parameterized',
 ]
 
 setup(
     name='leads_api',
-    version='0.0',
-    description='leads_api',
+    version='1.0.0',
+    description='Coverage generator API',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
         'Programming Language :: Python',
