@@ -25,6 +25,7 @@ requires = [
 ]
 
 tests_require = [
+    'alembic',
     'WebTest',
     'pytest',
     'pytest-cov',
