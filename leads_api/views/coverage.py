@@ -7,7 +7,7 @@ from leads_api.models.leads import (
     BuyerTier,
     BuyerTierMake,
     #BuyerTierMakeYear,
-    BuyerDealerCoverage,
+    BuyerTierDealerCoverage,
     Make,
     #Year,
 )
@@ -41,8 +41,8 @@ def coverage_get(request: Request):
             BuyerDealer.state.label('dealer_state'),
             BuyerDealer.zipcode.label('dealer_zipcode'),
             BuyerDealer.phone.label('dealer_phone'),
-            BuyerDealerCoverage.distance.label('distance'),
-            BuyerDealerCoverage.zipcode.label('zipcode'),
+            BuyerTierDealerCoverage.distance.label('distance'),
+            BuyerTierDealerCoverage.zipcode.label('zipcode'),
         )
         .filter(
             # Joins
@@ -52,14 +52,14 @@ def coverage_get(request: Request):
             BuyerTierMake.make_slug == Make.slug,
             #BuyerTierMakeYear.make_slug == Make.slug, # Enable this to add year filtering
             #BuyerTierMakeYear.year_slug == Year.slug, # Enable this to add year filtering
-            BuyerDealerCoverage.buyer_dealer_code == BuyerDealer.code,
+            BuyerTierDealerCoverage.buyer_tier_slug == BuyerTier.slug,
             # Filters
             BuyerTierMake.make_slug == make,
             BuyerTierMake.tier_slug == buyer_tier,
-            BuyerDealerCoverage.zipcode == zipcode,
+            BuyerTierDealerCoverage.zipcode == zipcode,
         )
         # Order result by distance ascending (we want the closer dealers)
-        .order_by(BuyerDealerCoverage.distance)
+        .order_by(BuyerTierDealerCoverage.distance)
         # Return only a limited amount of dealers. Initially, this number will be provided
         # by the client but later we could handle all the buyers configurations
         # and store this number in the database

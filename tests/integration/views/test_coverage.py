@@ -13,7 +13,7 @@ class CoverageGetTests(BaseIntegrationTest):
             BuyerMakeFactory,
             MakeFactory,
             BuyerTierFactory,
-            BuyerDealerCoverageFactory,
+            BuyerTierDealerCoverageFactory,
             BuyerTierMakeFactory,
             set_session,
         )
@@ -39,9 +39,9 @@ class CoverageGetTests(BaseIntegrationTest):
             tier_slug=self.buyer_tier.slug,
             make_slug=self.make.slug,
         )
-        self.dealer_coverage = BuyerDealerCoverageFactory(
-            buyer_slug=self.buyer.slug,
-            buyer_dealer_code=self.buyer_dealer.code
+        self.dealer_coverage = BuyerTierDealerCoverageFactory(
+            buyer_tier_slug=self.buyer_tier.slug,
+            dealer_code=self.buyer_dealer.code
         )
 
     def test_ok(self):

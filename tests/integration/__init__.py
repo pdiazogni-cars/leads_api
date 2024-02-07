@@ -1,9 +1,6 @@
 from webtest import TestApp
 import unittest
 
-import alembic
-import alembic.config
-import alembic.command
 import transaction
 from pyramid.paster import get_appsettings
 
@@ -27,7 +24,6 @@ class BaseIntegrationTest(unittest.TestCase):
         # to create the database model needed for tests
         ini_file = 'testing.ini'
         settings = get_appsettings(ini_file)
-        alembic_cfg = alembic.config.Config(ini_file)
 
         # Create a DB engine based on the settings
         dbengine = get_engine(settings)
@@ -35,13 +31,10 @@ class BaseIntegrationTest(unittest.TestCase):
         # Make sure to cleanup the database before and after running tests
         def dbcleanup():
             dbmetadata.drop_all(bind=dbengine)
-            alembic.command.stamp(alembic_cfg, None, purge=True)
+            dbmetadata.create_all(bind=dbengine)
 
         dbcleanup()
         self.addCleanup(dbcleanup)
-
-        # Run alembic migrations to create a fresh schema
-        alembic.command.upgrade(alembic_cfg, "head")
 
         # Creates the Pyramid application with the settings and the dbengine
         app = main({}, dbengine=dbengine, **settings)
