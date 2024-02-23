@@ -4,8 +4,7 @@ DROP DATABASE IF EXISTS leads_db_test;
 CREATE DATABASE leads_db_test;
 
 -- Connect to the database
-\c leads_db_test;
-
+\c leads_db_test;\n
 -- Tables definitions
 
 -- Create table `buyer`

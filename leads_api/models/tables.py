@@ -10,6 +10,37 @@ from sqlalchemy import (
 
 from .meta import metadata
 
+
+__all__ = [
+    'year',
+    'country',
+    'country_state',
+    'make',
+    'make_year',
+    'make_model',
+    'make_model_year',
+    'buyer',
+    'buyer_year',
+    'buyer_make',
+    'buyer_make_year',
+    'buyer_make_model',
+    'buyer_make_model_year',
+    'buyer_tier',
+    'legacy_buyer_tier',
+    'buyer_tier_year',
+    'buyer_tier_make',
+    'buyer_tier_make_year',
+    'buyer_tier_make_model',
+    'buyer_tier_make_model_year',
+    'buyer_dealer',
+    'buyer_dealer_year',
+    'buyer_dealer_make',
+    'buyer_dealer_make_year',
+    'buyer_dealer_make_model',
+    'buyer_dealer_make_model_year',
+    'buyer_tier_dealer_coverage',
+]
+
 year = Table(
     'year',
     metadata,

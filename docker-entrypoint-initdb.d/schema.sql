@@ -1,7 +1,6 @@
 
 -- Connect to the database
-\c leads_db;
-
+\c leads_db;\n
 -- Tables definitions
 
 -- Create table `buyer`
