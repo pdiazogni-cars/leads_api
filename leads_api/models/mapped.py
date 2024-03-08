@@ -42,6 +42,8 @@ from .tables import (
     buyer_dealer_make_year,
     buyer_dealer_make_model,
     buyer_dealer_make_model_year,
+    buyer_tier_dealer,
+    buyer_dealer_coverage,
     buyer_tier_dealer_coverage,
 )
 
@@ -129,14 +131,6 @@ class BuyerDealer:
 
 
 @dataclass
-class BuyerTierDealerCoverage:
-    buyer_tier_slug: Text
-    dealer_code: Text
-    zipcode: Text
-    distance: int
-
-
-@dataclass
 class BuyerMake:
     buyer_slug: Text
     make_slug: Text
@@ -156,20 +150,28 @@ class BuyerTierMakeYear:
     make_slug: Text
     year_slug: Text
 
-buyer_dealer = Table(
-    'buyer_dealer',
-    metadata,
-    Column(
-        'buyer_slug', String(50), ForeignKey('buyer.slug'), primary_key=True
-    ),
-    Column('code', String(15), primary_key=True),
-    Column('name', String(255)),
-    Column('address', String(255)),
-    Column('city', String(255)),
-    Column('state', String(255)),
-    Column('zipcode', String(255)),
-    Column('phone', String(255)),
-)
+
+@dataclass
+class BuyerTierDealer:
+    buyer_slug: Text
+    tier_slug: Text
+    dealer_code: Text
+
+
+@dataclass
+class BuyerDealerCoverage:
+    buyer_slug: Text
+    dealer_code: Text
+    zipcode: Text
+
+
+@dataclass
+class BuyerTierDealerCoverage:
+    buyer_slug: Text
+    tier_slug: Text
+    dealer_code: Text
+    zipcode: Text
+
 
 # ========= Mappings ============
 # Mappings should be done after declaring the Tables so
@@ -241,11 +243,6 @@ mapper_registry.map_imperatively(
 )
 
 mapper_registry.map_imperatively(
-    BuyerTierDealerCoverage,
-    buyer_tier_dealer_coverage,
-)
-
-mapper_registry.map_imperatively(
     BuyerMake,
     buyer_make,
     #properties={
@@ -271,4 +268,19 @@ mapper_registry.map_imperatively(
     #    'make': relationship(Make),
     #    'year': relationship(Year),
     #}
+)
+
+mapper_registry.map_imperatively(
+    BuyerTierDealer,
+    buyer_tier_dealer,
+)
+
+mapper_registry.map_imperatively(
+    BuyerDealerCoverage,
+    buyer_dealer_coverage,
+)
+
+mapper_registry.map_imperatively(
+    BuyerTierDealerCoverage,
+    buyer_tier_dealer_coverage,
 )

@@ -1,20 +1,19 @@
 from pyramid.request import Request
 from pyramid.view import view_config
 
-from leads_api.models.leads import (
+from leads_api.models.mapped import (
     Buyer,
     BuyerDealer,
     BuyerTier,
     BuyerTierMake,
-    #BuyerTierMakeYear,
-    BuyerTierDealerCoverage,
     Make,
-    #Year,
+    BuyerDealerCoverage,
+    BuyerTierDealerCoverage,
 )
 
 
 @view_config(
-    route_name='v1_buyers_tiers_makes_coverage',
+    route_name='v1_buyers_tiers_coverage',
     openapi=True,
     renderer='json',
 )
@@ -24,7 +23,7 @@ def coverage_get(request: Request):
     params = request.openapi_validated.parameters
     limit = params.query.get('limit', 3)
     buyer_tier = params.path['buyer_tier_slug']
-    make = params.path['make_slug']
+    #make = params.params.get('make_slug')
     zipcode = params.query['zipcode']
 
     # Prepare the query
@@ -41,7 +40,6 @@ def coverage_get(request: Request):
             BuyerDealer.state.label('dealer_state'),
             BuyerDealer.zipcode.label('dealer_zipcode'),
             BuyerDealer.phone.label('dealer_phone'),
-            BuyerTierDealerCoverage.distance.label('distance'),
             BuyerTierDealerCoverage.zipcode.label('zipcode'),
         )
         .filter(
@@ -58,8 +56,6 @@ def coverage_get(request: Request):
             BuyerTierMake.tier_slug == buyer_tier,
             BuyerTierDealerCoverage.zipcode == zipcode,
         )
-        # Order result by distance ascending (we want the closer dealers)
-        .order_by(BuyerTierDealerCoverage.distance)
         # Return only a limited amount of dealers. Initially, this number will be provided
         # by the client but later we could handle all the buyers configurations
         # and store this number in the database
