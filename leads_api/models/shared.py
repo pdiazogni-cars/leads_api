@@ -1,47 +1,92 @@
+"""
+Core models which are shared with Obelisk, and populated via fixture data.
+"""
+
+from dataclasses import dataclass, field
+from typing import Iterable, List, Text
 from sqlalchemy import (
+    text,
+    ForeignKey,
     Table,
     Column,
     Integer,
     String,
-    ForeignKey,
     UniqueConstraint,
     ForeignKeyConstraint,
 )
 
-from .meta import metadata
+from . import metadata
 
 
-__all__ = [
-    'year',
-    'country',
-    'country_state',
-    'make',
-    'make_year',
-    'make_model',
-    'make_model_year',
-    'buyer',
-    'buyer_year',
-    'buyer_make',
-    'buyer_make_year',
-    'buyer_make_model',
-    'buyer_make_model_year',
-    'buyer_tier',
-    'legacy_buyer_tier',
-    'buyer_tier_year',
-    'buyer_tier_make',
-    'buyer_tier_make_year',
-    'buyer_tier_make_model',
-    'buyer_tier_make_model_year',
-    'buyer_dealer',
-    'buyer_dealer_year',
-    'buyer_dealer_make',
-    'buyer_dealer_make_year',
-    'buyer_dealer_make_model',
-    'buyer_dealer_make_model_year',
-    'buyer_tier_dealer',
-    'buyer_dealer_coverage',
-    'buyer_tier_dealer_coverage',
-]
+@dataclass
+class Year:
+    slug: Text
+    name: Text
+
+
+@dataclass
+class Make:
+    slug: Text
+    name: Text
+    years: List['Year']
+    models: List['MakeModel']
+
+
+@dataclass
+class MakeModel:
+    make_slug: Text
+    slug: Text
+    name: Text
+    years: List['Year']
+
+
+@dataclass
+class Buyer:
+    slug: Text
+    name: Text
+    makes: List['Make']
+    tiers: List['BuyerTier']
+    dealers: List['BuyerDealer']
+
+
+@dataclass
+class BuyerTier:
+    buyer_slug: Text
+    slug: Text
+    name: Text
+    makes: List[Make]
+
+
+@dataclass
+class LegacyBuyerTier:
+    buyer_slug: Text
+    buyer_tier_slug: Text
+    legacy_id: Integer
+    legacy_name: Text
+
+
+@dataclass
+class BuyerDealer:
+    buyer_slug: Text
+    code: Text
+    name: Text
+    address: Text
+    city: Text
+    state: Text
+    zipcode: Text
+    country_slug: Text
+    phone: Text
+    makes: List['Make']
+    coverage: List['BuyerDealerCoverage']
+
+
+@dataclass
+class BuyerDealerCoverage:
+    buyer_slug: Text
+    dealer_code: Text
+    zipcode: Text
+    distance: int
+
 
 year = Table(
     'year',
@@ -324,7 +369,7 @@ buyer_dealer = Table(
     Column('address', String(255)),
     Column('city', String(255)),
     Column('state', String(50)),
-    Column('zipcode', String(50)),
+    Column('zipcode', String(255)),
     Column('country_slug', String(50)),
     Column('phone', String(255)),
     UniqueConstraint('buyer_slug', 'name', 'address', 'city', 'state', 'zipcode'),
@@ -426,48 +471,14 @@ buyer_dealer_make_model_year = Table(
     ),
 )
 
-buyer_tier_dealer = Table(
-    'buyer_tier_dealer',
-    metadata,
-    Column('buyer_slug', String(50), primary_key=True),
-    Column('tier_slug', String(50), primary_key=True),
-    Column('dealer_code', String(50), primary_key=True),
-    ForeignKeyConstraint(
-        ['buyer_slug', 'tier_slug'],
-        ['buyer_tier.buyer_slug', 'buyer_tier.slug']
-    ),
-    ForeignKeyConstraint(
-        ['buyer_slug', 'dealer_code'],
-        ['buyer_dealer.buyer_slug', 'buyer_dealer.code']
-    ),
-)
-
 buyer_dealer_coverage = Table(
     'buyer_dealer_coverage',
     metadata,
     Column('buyer_slug', String(50), primary_key=True),
     Column('dealer_code', String(50), primary_key=True),
-    Column('zipcode', String(50), primary_key=True),
+    Column('zipcode', String(255), primary_key=True),
+    Column('distance', Integer),
     ForeignKeyConstraint(
-        ['buyer_slug', 'dealer_code'],
-        ['buyer_dealer.buyer_slug', 'buyer_dealer.code']
-    ),
-    # Foreign-key zipcode to a zipcode table
-)
-
-buyer_tier_dealer_coverage = Table(
-    'buyer_tier_dealer_coverage',
-    metadata,
-    Column('buyer_slug', String(50), primary_key=True),
-    Column('tier_slug', String(50), primary_key=True),
-    Column('dealer_code', String(50), primary_key=True),
-    Column('zipcode', String(50), primary_key=True),
-    ForeignKeyConstraint(
-        ['buyer_slug', 'tier_slug', 'dealer_code'],
-        ['buyer_tier_dealer.buyer_slug', 'buyer_tier_dealer.tier_slug', 'buyer_tier_dealer.dealer_code']
-    ),
-    ForeignKeyConstraint(
-        ['buyer_slug', 'dealer_code', 'zipcode'],
-        ['buyer_dealer_coverage.buyer_slug', 'buyer_dealer_coverage.dealer_code', 'buyer_dealer_coverage.zipcode']
+        ['buyer_slug', 'dealer_code'], ['buyer_dealer.buyer_slug', 'buyer_dealer.code']
     ),
 )
