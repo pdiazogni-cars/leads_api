@@ -11,7 +11,7 @@ from leads_api.models.leads import (
     Buyer,
     BuyerTier,
     BuyerDealer,
-    BuyerDealerCoverage,
+    BuyerTierDealerCoverage,
     Make,
     BuyerMake,
     BuyerTierMake,
@@ -44,18 +44,6 @@ class BuyerDealerFactory(factory.alchemy.SQLAlchemyModelFactory):
     state = factory.Faker('state')
     zipcode = factory.Faker('postcode')
     phone = factory.Faker('phone_number')
-
-
-class BuyerDealerCoverageFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = BuyerDealerCoverage
-
-    # TODO: use factory.SubFactory
-    buyer_slug = factory.Sequence(lambda n: f'buyer-{n}')
-    buyer_dealer_code = factory.Sequence(lambda n: f'dealer-{n}')
-
-    zipcode = factory.Faker('postcode')
-    distance = factory.Faker('random_int', min=1, max=100)
 
 
 class MakeFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -99,6 +87,18 @@ class BuyerTierMakeFactory(factory.alchemy.SQLAlchemyModelFactory):
     make_slug = factory.Iterator(['honda', 'mercedes-benz', 'toyota', 'ford'])
 
 
+class BuyerTierDealerCoverageFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = BuyerTierDealerCoverage
+
+    # TODO: use factory.SubFactory
+    buyer_tier_slug = factory.Sequence(lambda n: f'buyer-tier-{n}')
+    dealer_code = factory.Sequence(lambda n: f'dealer-{n}')
+
+    zipcode = factory.Faker('postcode')
+    distance = factory.Faker('random_int', min=1, max=100)
+
+
 def set_session(dbsession):
     """Associates all the factories models to the current testing db session.
     This way the factories can generate dummy data for testing in the same
@@ -107,9 +107,9 @@ def set_session(dbsession):
         BuyerFactory,
         BuyerTierFactory,
         BuyerDealerFactory,
-        BuyerDealerCoverageFactory,
         MakeFactory,
         BuyerMakeFactory,
         BuyerTierMakeFactory,
+        BuyerTierDealerCoverageFactory,
     ]:
         cls._meta.sqlalchemy_session_factory = lambda: dbsession

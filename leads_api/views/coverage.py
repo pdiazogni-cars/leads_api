@@ -1,7 +1,5 @@
 from pyramid.request import Request
-from marshmallow import Schema, fields
-from cornice import Service
-from cornice.validators import marshmallow_querystring_validator
+from pyramid.view import view_config
 
 from leads_api.models.leads import (
     Buyer,
@@ -9,43 +7,25 @@ from leads_api.models.leads import (
     BuyerTier,
     BuyerTierMake,
     #BuyerTierMakeYear,
-    BuyerDealerCoverage,
+    BuyerTierDealerCoverage,
     Make,
     #Year,
 )
 
 
-class GetQuerystringSchema(Schema):
-    """This schema is used to validate Coverage GET requests
-    querystring parameters, using Marshmallow Schema + cornice
-    service integration with marshmallow
-    """
-    buyer_tier = fields.String(required=True)
-    zipcode = fields.String(required=True)
-    make = fields.String(required=True)
-    limit = fields.Integer(default=3)
-
-
-# Define a cornice service to integrate the marshmallow schema validation
-# mapped to pyramid route
-coverage_service = Service(
-    name='coverage',
-    description="Returns the buyer's coverage of a make in a zipcode",
-    pyramid_route='v1_coverage',
-)
-
-
-@coverage_service.get(
-    schema=GetQuerystringSchema,
-    validators=(marshmallow_querystring_validator),
+@view_config(
+    route_name='v1_buyers_tiers_makes_coverage',
+    openapi=True,
+    renderer='json',
 )
 def coverage_get(request: Request):
     """Gets the dealers coverage for a specific buyer, make within a zipcode"""
     # Get requests params
-    limit = request.validated.get('limit', 3)
-    buyer_tier = request.validated['buyer_tier']
-    make = request.validated['make']
-    zipcode = request.validated['zipcode']
+    params = request.openapi_validated.parameters
+    limit = params.query.get('limit', 3)
+    buyer_tier = params.path['buyer_tier_slug']
+    make = params.path['make_slug']
+    zipcode = params.query['zipcode']
 
     # Prepare the query
     query = (
@@ -61,8 +41,8 @@ def coverage_get(request: Request):
             BuyerDealer.state.label('dealer_state'),
             BuyerDealer.zipcode.label('dealer_zipcode'),
             BuyerDealer.phone.label('dealer_phone'),
-            BuyerDealerCoverage.distance.label('distance'),
-            BuyerDealerCoverage.zipcode.label('zipcode'),
+            BuyerTierDealerCoverage.distance.label('distance'),
+            BuyerTierDealerCoverage.zipcode.label('zipcode'),
         )
         .filter(
             # Joins
@@ -72,14 +52,14 @@ def coverage_get(request: Request):
             BuyerTierMake.make_slug == Make.slug,
             #BuyerTierMakeYear.make_slug == Make.slug, # Enable this to add year filtering
             #BuyerTierMakeYear.year_slug == Year.slug, # Enable this to add year filtering
-            BuyerDealerCoverage.buyer_dealer_code == BuyerDealer.code,
+            BuyerTierDealerCoverage.buyer_tier_slug == BuyerTier.slug,
             # Filters
             BuyerTierMake.make_slug == make,
             BuyerTierMake.tier_slug == buyer_tier,
-            BuyerDealerCoverage.zipcode == zipcode,
+            BuyerTierDealerCoverage.zipcode == zipcode,
         )
         # Order result by distance ascending (we want the closer dealers)
-        .order_by(BuyerDealerCoverage.distance)
+        .order_by(BuyerTierDealerCoverage.distance)
         # Return only a limited amount of dealers. Initially, this number will be provided
         # by the client but later we could handle all the buyers configurations
         # and store this number in the database
@@ -129,11 +109,4 @@ def coverage_get(request: Request):
     else:
         data['has_coverage'] = False
 
-    result = {
-        'status': 'ok',
-        'data': data,
-        'metadata': {
-            'params': dict(request.params),
-        },
-    }
-    return result
+    return data

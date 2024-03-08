@@ -1,0 +1,120 @@
+openapi: 3.0.0
+
+info:
+  title: Coverage generator API
+  description: This API is used to lookup for cars makes dealer coverage.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:6543/
+    description: Local development server
+  - url: https://<projectname>.nchub-stage.net/
+    description: Stage server
+  - url: https://<projectname>.nchub.net/
+    description: Production server
+
+paths:
+  /v1/buyers_tiers/{buyer_tier_slug}/makes/{make_slug}/coverage:
+    get:
+      summary: Get dealers coverage for a specific buyer tier
+      parameters:
+        - name: buyer_tier_slug
+          in: path
+          required: true
+          description: slug of the buyer tier
+          schema:
+            type: string
+        - name: make_slug
+          in: path
+          required: true
+          description: slug of the car make
+          schema:
+            type: string
+        - name: zipcode
+          in: query
+          required: true
+          description: zipcode to lookup a dealer that has coverage in that area
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Coverage'
+
+        '400':
+          description: Bad Request
+
+
+components:
+  schemas:
+    Response:
+      type: object
+      description: Response wrapper to add common metadata for all responses
+      properties:
+        metadata:
+          type: object
+          description: Object with request metadata
+        status:
+          type: string
+          description: Status description of the response
+        data:
+          type: object
+          description: Actual requested data
+
+    Coverage:
+      type: object
+      properties:
+        has_coverage:
+          type: boolean
+          description: Returns true if coverage was found for the specified parameters.
+        buyer:
+          type: string
+          description: Buyer name
+        buyer_tier:
+          type: string
+          description: Buyer tier name
+        coverage:
+          type: array
+          description: List with dealers that have coverage in that area
+          items:
+            type: object
+            properties:
+              dealer_code:
+                type: string
+                description: Dealer code
+              dealer_name:
+                type: string
+                description: Dealer name
+              dealer_address:
+                type: string
+                description: Dealer address
+              dealer_city:
+                type: string
+                description: Dealer city
+              dealer_state:
+                type: string
+                description: Dealer state
+              dealer_zipcode:
+                type: string
+                description: Dealer zipcode
+              dealer_phone:
+                type: string
+                format: phone
+                description: Dealer phone
+              make:
+                type: string
+                description: Car make name covered by the dealer
+              distance:
+                type: integer
+                description: The distance of the dealer to the covered zipcode
+              zipcode:
+                type: string
+                description: The covered zipcode
+
